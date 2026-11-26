@@ -1,0 +1,11 @@
+{
+  "name": "AQUA REMIND — Desktop Productivity & Prayer",
+  "short_name": "AQUA REMIND",
+  "description": "Aplikasi produktivitas desktop untuk mengatur tugas sekolah, timer Pomodoro, dan pengingat jadwal sholat.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#e0f7fa",
+  "theme_color": "#0ea5e9",
+  "icons": []
+}
