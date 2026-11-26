@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1024, initial-scale=1.0">
+    <meta name="theme-color" content="#0ea5e9">
+    <meta name="description" content="AQUA REMIND — Aplikasi Produktivitas Desktop, Pengatur Tugas Sekolah, Timer Fokus & Jadwal Sholat">
+    <title>AQUA REMIND — Desktop Productivity & Prayer Companion</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+
+    <!-- Desktop Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Ambient Aqua Background Orbs -->
+    <div class="ambient-orb orb-top-left"></div>
+    <div class="ambient-orb orb-bottom-right"></div>
+    <div class="ambient-orb orb-center"></div>
+
+    <!-- DESKTOP DYNAMIC ISLAND (TOP CENTER CAPSULE) -->
+    <header class="di-anchor" aria-label="Dynamic Island Desktop">
+        <div id="dynamicIsland" class="dynamic-island" role="button" tabindex="0" aria-expanded="false" title="Klik untuk memperluas atau mengecilkan Dynamic Island">
+            <!-- Compact Capsule View -->
+            <div class="di-compact">
+                <div class="di-seg di-time-seg">
+                    <span class="di-dot" id="diPulseDot"></span>
+                    <span id="diClock" class="mono">00:00:00</span>
+                </div>
+                <div class="di-divider"></div>
+                <div class="di-seg di-prayer-seg">
+                    <i class="ri-moon-clear-fill"></i>
+                    <span id="diNextPrayer">Sholat --:--</span>
+                </div>
+                <div class="di-divider"></div>
+                <div class="di-seg di-timer-seg">
+                    <i class="ri-timer-2-line"></i>
+                    <span id="diTimer" class="mono">25:00</span>
+                </div>
+                <div class="di-divider"></div>
+                <div class="di-seg di-task-seg">
+                    <i class="ri-alarm-warning-line"></i>
+                    <span id="diTaskTicker">Tugas aman</span>
+                </div>
+            </div>
+
+            <!-- Expanded Desktop Panel -->
+            <div class="di-expanded">
+                <div class="di-exp-top">
+                    <div class="di-brand-tag">
+                        <i class="ri-sparkling-2-fill"></i>
+                        <span>AQUA REMIND — Live Desktop Hub</span>
+                    </div>
+                    <span id="diExpDate" class="di-exp-date">Kamis, 26 Nov 2026</span>
+                </div>
+
+                <div class="di-exp-grid">
+                    <div class="di-panel">
+                        <span class="di-panel-label">Countdown Sholat Berikutnya</span>
+                        <div class="di-panel-value" id="diExpPrayerName">Memuat...</div>
+                        <div class="di-panel-mono mono" id="diExpPrayerCountdown">--:--:--</div>
+                    </div>
+
+                    <div class="di-panel">
+                        <span class="di-panel-label">Timer Belajar / Fokus</span>
+                        <div class="di-panel-value" id="diExpTimerMode">Pomodoro Fokus</div>
+                        <div class="di-panel-mono mono" id="diExpTimerValue">25:00</div>
+                    </div>
+
+                    <div class="di-panel">
+                        <span class="di-panel-label">Notifikasi Tugas Terdekat</span>
+                        <div class="di-panel-value" id="diExpTaskTitle">Tidak ada tugas aktif</div>
+                        <div class="di-panel-sub" id="diExpTaskMeta">Semua target terkendali</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN DESKTOP SHELL (LEFT SIDEBAR + CENTER/MAIN WORKSPACE) -->
+    <div class="desktop-shell">
+
+        <!-- LEFT SIDEBAR NAVIGATION -->
+        <aside class="desktop-sidebar" aria-label="Navigasi Utama Desktop">
+            <div class="sidebar-header">
+                <div class="logo-badge">
+                    <i class="ri-drop-fill"></i>
+                </div>
+                <div>
+                    <div class="app-title">AQUA REMIND</div>
+                    <div class="app-edition">Desktop Workspace</div>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <button class="menu-item active" data-section="dashboard">
+                    <i class="ri-layout-grid-fill"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="menu-item" data-section="tasks">
+                    <i class="ri-checkbox-multiple-line"></i>
+                    <span>Tugas Sekolah</span>
+                    <span class="menu-badge" id="sidebarPendingBadge">0</span>
+                </button>
+                <button class="menu-item" data-section="prayer">
+                    <i class="ri-mosque-line"></i>
+                    <span>Jadwal Sholat</span>
+                </button>
+                <button class="menu-item" data-section="focus">
+                    <i class="ri-timer-flash-line"></i>
+                    <span>Timer & Pomodoro</span>
+                </button>
+                <button class="menu-item" data-section="settings">
+                    <i class="ri-equalizer-3-line"></i>
+                    <span>Pengaturan</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-status-box">
+                    <div class="status-row">
+                        <span>Lokasi Sholat</span>
+                        <strong id="sidebarLocationText">Memuat...</strong>
+                    </div>
+                    <div class="status-row">
+                        <span>Notifikasi</span>
+                        <strong id="sidebarNotifBadge">Cek Izin</strong>
+                    </div>
+                </div>
+
+                <button id="installPwaBtn" class="btn-install-desktop hidden">
+                    <i class="ri-download-2-line"></i>
+                    <span>Install Aplikasi Desktop</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- CENTER / MAIN WORKSPACE -->
+        <main class="desktop-main">
+
+            <!-- ================= 1. DASHBOARD ================= -->
+            <section id="section-dashboard" class="workspace-section active">
+                <div class="dashboard-hero glass-panel">
+                    <div class="hero-main">
+                        <div class="hero-meta-row">
+                            <span class="date-chip" id="dashDateText">Kamis, 26 November 2026</span>
+                            <span class="loc-chip" id="dashLocationChip"><i class="ri-map-pin-2-fill"></i> Mendeteksi lokasi...</span>
+                        </div>
+                        <h1 id="dashGreetingText">Selamat Sore, Pelajar!</h1>
+                        <p class="hero-desc">Kelola deadline tugas sekolah, jaga waktu sholat lima waktu, dan pertahankan fokus belajar di layar desktop Anda.</p>
+
+                        <div class="hero-clock-strip">
+                            <div class="clock-block">
+                                <span class="clock-label">Waktu Lokal</span>
+                                <span id="dashMainClock" class="clock-digits mono">00:00:00</span>
+                            </div>
+                            <div class="clock-sep"></div>
+                            <div class="clock-block">
+                                <span class="clock-label">Sholat Berikutnya</span>
+                                <span id="dashHeroNextPrayer" class="clock-prayer">--:-- (--:--:--)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MASCOT AVATAR DI SUDUT DASHBOARD -->
+                    <div class="mascot-corner" id="mascotCorner" title="Klik maskot untuk menyapa atau mengganti respons">
+                        <div class="mascot-bubble" id="mascotBubble">Halo! Siap menaklukkan tugas hari ini? ✨</div>
+                        <div class="mascot-frame" id="mascotFrame">
+                            <div id="mascotSvgContainer" class="mascot-svg-anim"></div>
+                        </div>
+                        <div class="mascot-caption">
+                            <span id="mascotNameLabel">Beruang Biru</span>
+                            <span class="mascot-mood-pill" id="mascotMoodLabel">Senang</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4 KPI Cards Proporsional Desktop -->
+                <div class="kpi-row">
+                    <div class="glass-panel kpi-card">
+                        <div class="kpi-icon kpi-amber"><i class="ri-todo-line"></i></div>
+                        <div>
+                            <span class="kpi-title">Tugas Belum Selesai</span>
+                            <div class="kpi-num" id="kpiPending">0</div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel kpi-card">
+                        <div class="kpi-icon kpi-emerald"><i class="ri-check-double-line"></i></div>
+                        <div>
+                            <span class="kpi-title">Tugas Selesai</span>
+                            <div class="kpi-num" id="kpiCompleted">0</div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel kpi-card">
+                        <div class="kpi-icon kpi-aqua"><i class="ri-bar-chart-grouped-line"></i></div>
+                        <div class="kpi-progress-wrap">
+                            <div class="kpi-progress-top">
+                                <span class="kpi-title">Progress Tugas</span>
+                                <strong id="kpiProgressText">0%</strong>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" id="kpiProgressBar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel kpi-card">
+                        <div class="kpi-icon kpi-navy"><i class="ri-fire-fill"></i></div>
+                        <div>
+                            <span class="kpi-title">Sesi Pomodoro</span>
+                            <div class="kpi-num" id="kpiPomodoro">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Split Grid (Tugas Terdekat + Ringkasan Sholat & Quick Timer) -->
+                <div class="dashboard-split">
+                    <div class="glass-panel panel-box">
+                        <div class="panel-head">
+                            <h3><i class="ri-alarm-warning-fill"></i> Pengingat Deadline Terdekat</h3>
+                            <button class="btn-ghost" data-jump="tasks">Lihat Semua <i class="ri-arrow-right-line"></i></button>
+                        </div>
+                        <div id="dashDeadlineList" class="dash-task-list">
+                            <!-- Diisi via JS -->
+                        </div>
+                    </div>
+
+                    <div class="dashboard-side-stack">
+                        <div class="glass-panel panel-box">
+                            <div class="panel-head">
+                                <h3><i class="ri-moon-clear-fill"></i> Jadwal Sholat Hari Ini</h3>
+                                <button class="btn-ghost" data-jump="prayer">Detail <i class="ri-arrow-right-line"></i></button>
+                            </div>
+                            <div id="dashPrayerMiniGrid" class="dash-prayer-grid">
+                                <!-- Diisi via JS -->
+                            </div>
+                        </div>
+
+                        <div class="glass-panel panel-box">
+                            <div class="panel-head">
+                                <h3><i class="ri-timer-flash-fill"></i> Kontrol Cepat Timer</h3>
+                                <button class="btn-ghost" data-jump="focus">Mode Penuh <i class="ri-arrow-right-line"></i></button>
+                            </div>
+                            <div class="quick-focus-bar">
+                                <span id="dashQuickTimerDisplay" class="quick-timer-digits mono">25:00</span>
+                                <div class="quick-focus-actions">
+                                    <button id="dashQuickStartBtn" class="btn-aqua btn-sm"><i class="ri-play-fill"></i> Mulai</button>
+                                    <button id="dashQuickPauseBtn" class="btn-outline btn-sm hidden"><i class="ri-pause-fill"></i> Jeda</button>
+                                    <button id="dashQuickResetBtn" class="btn-outline btn-sm"><i class="ri-refresh-line"></i> Reset</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= 2. TUGAS SEKOLAH ================= -->
+            <section id="section-tasks" class="workspace-section">
+                <div class="section-topbar">
+                    <div>
+                        <h2>Pengelolaan Tugas Sekolah</h2>
+                        <p>Tambah, edit, selesaikan, dan pantau status deadline tugas dengan indikator warna otomatis.</p>
+                    </div>
+                    <button id="openTaskModalBtn" class="btn-aqua">
+                        <i class="ri-add-circle-line"></i> Tambah Tugas Baru
+                    </button>
+                </div>
+
+                <div class="glass-panel toolbar-card">
+                    <div class="filter-group">
+                        <button class="chip-btn active" data-task-filter="all">Semua Tugas</button>
+                        <button class="chip-btn" data-task-filter="pending">Belum Selesai</button>
+                        <button class="chip-btn" data-task-filter="near">Mendekati Deadline</button>
+                        <button class="chip-btn" data-task-filter="overdue">Terlewat Deadline</button>
+                        <button class="chip-btn" data-task-filter="completed">Riwayat Selesai</button>
+                    </div>
+                    <div class="search-input-wrap">
+                        <i class="ri-search-line"></i>
+                        <input type="text" id="taskSearchField" placeholder="Cari nama tugas atau mata pelajaran...">
+                    </div>
+                </div>
+
+                <div class="legend-strip">
+                    <span><i class="indicator ind-red"></i> Terlewat Deadline</span>
+                    <span><i class="indicator ind-yellow"></i> Mendekati Deadline (&lt; 24 Jam)</span>
+                    <span><i class="indicator ind-blue"></i> Terjadwal Normal</span>
+                    <span><i class="indicator ind-green"></i> Sudah Selesai</span>
+                </div>
+
+                <div id="tasksGridContainer" class="tasks-desktop-grid">
+                    <!-- Kartu Tugas Dirender via JS -->
+                </div>
+            </section>
+
+            <!-- ================= 3. JADWAL SHOLAT ================= -->
+            <section id="section-prayer" class="workspace-section">
+                <div class="section-topbar">
+                    <div>
+                        <h2>Jadwal Sholat Lima Waktu</h2>
+                        <p>Otomatis berdasarkan lokasi GPS atau pilihan kota secara manual dengan countdown real-time.</p>
+                    </div>
+                    <div class="prayer-controls-row">
+                        <select id="citySelector" class="select-desktop" aria-label="Pilih Kota">
+                            <option value="auto">📍 Deteksi Lokasi Otomatis (GPS)</option>
+                            <option value="-6.2088,106.8456,Jakarta">Jakarta</option>
+                            <option value="-6.9175,107.6191,Bandung">Bandung</option>
+                            <option value="-7.2575,112.7521,Surabaya">Surabaya</option>
+                            <option value="-7.7956,110.3695,Yogyakarta">Yogyakarta</option>
+                            <option value="-6.9667,110.4167,Semarang">Semarang</option>
+                            <option value="-7.9666,112.6326,Malang">Malang</option>
+                            <option value="-7.7600,112.1900,Kediri / Pare">Kediri / Pare</option>
+                            <option value="3.5952,98.6722,Medan">Medan</option>
+                            <option value="-5.1477,119.4327,Makassar">Makassar</option>
+                            <option value="-8.6705,115.2126,Denpasar">Denpasar</option>
+                        </select>
+                        <button id="refreshLocationBtn" class="btn-outline">
+                            <i class="ri-crosshair-2-line"></i> Perbarui Lokasi
+                        </button>
+                    </div>
+                </div>
+
+                <div class="prayer-hero-banner glass-panel">
+                    <div>
+                        <span class="prayer-tag">SHOLAT BERIKUTNYA</span>
+                        <h3 id="prayerBannerTitle">Memuat Jadwal...</h3>
+                        <p id="prayerHijriLabel" class="prayer-hijri">Kalender Hijriah</p>
+                    </div>
+                    <div class="prayer-countdown-box">
+                        <span class="countdown-caption">Sisa Waktu Menuju Adzan</span>
+                        <div id="prayerMainCountdown" class="countdown-big mono">--:--:--</div>
+                        <small id="prayerSourceLabel">Aladhan API • Metode Kemenag RI</small>
+                    </div>
+                </div>
+
+                <div id="prayerFiveCards" class="prayer-five-grid">
+                    <!-- Subuh, Dzuhur, Ashar, Maghrib, Isya -->
+                </div>
+            </section>
+
+            <!-- ================= 4. TIMER, STOPWATCH & POMODORO ================= -->
+            <section id="section-focus" class="workspace-section">
+                <div class="section-topbar">
+                    <div>
+                        <h2>Timer Belajar, Stopwatch & Pomodoro Focus Mode</h2>
+                        <p>Akurat menggunakan perhitungan timestamp agar tetap presisi meskipun berpindah tab atau jendela.</p>
+                    </div>
+                    <div class="glass-panel session-pill">
+                        <i class="ri-medal-2-fill"></i>
+                        <span>Sesi Fokus Selesai: <strong id="focusSessionCount">0</strong></span>
+                    </div>
+                </div>
+
+                <div class="glass-panel focus-stage">
+                    <div class="mode-selector-bar">
+                        <button class="mode-pill active" data-mode="pomodoro">Pomodoro (25m)</button>
+                        <button class="mode-pill" data-mode="shortBreak">Istirahat Singkat (5m)</button>
+                        <button class="mode-pill" data-mode="longBreak">Istirahat Panjang (15m)</button>
+                        <button class="mode-pill" data-mode="custom">Timer Custom</button>
+                        <button class="mode-pill" data-mode="stopwatch">Stopwatch</button>
+                    </div>
+
+                    <div id="customDurationBar" class="custom-duration-bar hidden">
+                        <label for="customMinutesField">Atur Durasi (Menit):</label>
+                        <input type="number" id="customMinutesField" min="1" max="240" value="40" class="input-desktop input-short">
+                        <button id="setCustomDurationBtn" class="btn-outline btn-sm">Terapkan Durasi</button>
+                    </div>
+
+                    <div class="timer-visual-box">
+                        <svg class="progress-ring-svg" width="280" height="280" viewBox="0 0 280 280">
+                            <circle class="ring-track" cx="140" cy="140" r="122"></circle>
+                            <circle class="ring-indicator" id="timerCircleIndicator" cx="140" cy="140" r="122"></circle>
+                        </svg>
+                        <div class="timer-readout-center">
+                            <span id="focusModeTitle" class="focus-mode-badge">POMODORO FOKUS</span>
+                            <div id="focusClockDisplay" class="focus-big-digits mono">25:00</div>
+                            <span id="focusStateLabel" class="focus-state-text">Siap dimulai</span>
+                        </div>
+                    </div>
+
+                    <div class="focus-buttons-row">
+                        <button id="focusStartBtn" class="btn-aqua btn-lg"><i class="ri-play-fill"></i> Mulai</button>
+                        <button id="focusPauseBtn" class="btn-amber btn-lg hidden"><i class="ri-pause-fill"></i> Jeda</button>
+                        <button id="focusResumeBtn" class="btn-aqua btn-lg hidden"><i class="ri-play-fill"></i> Lanjutkan</button>
+                        <button id="focusResetBtn" class="btn-outline btn-lg"><i class="ri-restart-line"></i> Reset</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= 5. PENGATURAN PENGGUNA ================= -->
+            <section id="section-settings" class="workspace-section">
+                <div class="section-topbar">
+                    <div>
+                        <h2>Pengaturan Pengguna</h2>
+                        <p>Kustomisasi nama, karakter maskot, tema, jadwal sholat, suara, dan notifikasi desktop.</p>
+                    </div>
+                    <button id="saveAllSettingsBtn" class="btn-aqua">
+                        <i class="ri-save-3-line"></i> Simpan Semua Pengaturan
+                    </button>
+                </div>
+
+                <div class="settings-two-col">
+                    <!-- Kolom Kiri: Profil, Maskot & Tampilan -->
+                    <div class="glass-panel settings-box">
+                        <h3><i class="ri-user-heart-line"></i> Profil, Maskot & Tema</h3>
+
+                        <div class="field-group">
+                            <label for="cfgUserName">Nama Pengguna</label>
+                            <input type="text" id="cfgUserName" class="input-desktop" placeholder="Masukkan nama Anda...">
+                        </div>
+
+                        <div class="field-group">
+                            <label>Pilih Karakter Maskot Dashboard</label>
+                            <div class="mascot-picker-grid">
+                                <button type="button" class="mascot-opt active" data-mascot="bear">
+                                    <span>🐻‍❄️</span>
+                                    <strong>Beruang Biru</strong>
+                                </button>
+                                <button type="button" class="mascot-opt" data-mascot="cat">
+                                    <span>🐱</span>
+                                    <strong>Kucing Putih</strong>
+                                </button>
+                                <button type="button" class="mascot-opt" data-mascot="bunny">
+                                    <span>🐰</span>
+                                    <strong>Kelinci Kecil</strong>
+                                </button>
+                                <button type="button" class="mascot-opt" data-mascot="hamster">
+                                    <span>🐹</span>
+                                    <strong>Hamster Lucu</strong>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label>Tema Warna Desktop</label>
+                            <div class="theme-choice-row">
+                                <button type="button" class="theme-opt active" data-theme-choice="light">
+                                    <i class="ri-sun-foggy-line"></i> Light (Soft Aqua & White)
+                                </button>
+                                <button type="button" class="theme-opt" data-theme-choice="dark">
+                                    <i class="ri-moon-foggy-line"></i> Dark (Deep Navy)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kolom Kanan: Notifikasi Desktop & Data -->
+                    <div class="glass-panel settings-box">
+                        <h3><i class="ri-notification-3-line"></i> Notifikasi Desktop & Penyimpanan</h3>
+
+                        <div class="permission-banner">
+                            <div>
+                                <strong>Izin Web Notifications API</strong>
+                                <p id="cfgPermText">Mengecek status izin browser...</p>
+                            </div>
+                            <button type="button" id="requestDesktopNotifBtn" class="btn-aqua btn-sm">
+                                Minta Izin Notifikasi
+                            </button>
+                        </div>
+
+                        <div class="switch-item">
+                            <div>
+                                <strong>Pengingat Deadline Tugas</strong>
+                                <small>Kirim notifikasi desktop dan floating reminder sebelum deadline</small>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="cfgNotifTask" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="field-group">
+                            <label for="cfgLeadMinutes">Waktu Pengingat Sebelum Deadline</label>
+                            <select id="cfgLeadMinutes" class="select-desktop">
+                                <option value="15">15 Menit Sebelum Deadline</option>
+                                <option value="30" selected>30 Menit Sebelum Deadline</option>
+                                <option value="60">1 Jam Sebelum Deadline</option>
+                                <option value="180">3 Jam Sebelum Deadline</option>
+                                <option value="1440">1 Hari Sebelum Deadline</option>
+                            </select>
+                        </div>
+
+                        <div class="switch-item">
+                            <div>
+                                <strong>Pengingat Waktu Sholat 5 Waktu</strong>
+                                <small>Notifikasi otomatis saat masuk waktu Subuh, Dzuhur, Ashar, Maghrib, Isya</small>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="cfgNotifPrayer" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-item">
+                            <div>
+                                <strong>Suara Nada Pengingat</strong>
+                                <small>Bunyikan nada lembut saat timer selesai atau waktu sholat tiba</small>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="cfgSound" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="settings-btn-group">
+                            <button type="button" id="testDesktopNotifBtn" class="btn-outline">
+                                <i class="ri-volume-up-line"></i> Tes Notifikasi & Suara
+                            </button>
+                            <button type="button" id="wipeAllDataBtn" class="btn-danger-outline">
+                                <i class="ri-delete-bin-6-line"></i> Hapus Semua Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- FLOATING REMINDER WIDGET (TETAP TERLIHAT SAAT MENJELAJAHI HALAMAN) -->
+    <aside id="floatingReminder" class="floating-reminder" aria-live="polite" aria-label="Floating Reminder">
+        <div class="fr-header">
+            <span class="fr-badge"><i class="ri-pushpin-2-fill"></i> Floating Reminder</span>
+            <button id="frMinimizeBtn" class="fr-icon-btn" title="Perkecil / Perluas"><i class="ri-subtract-line"></i></button>
+        </div>
+        <div id="frBody" class="fr-body">
+            <div class="fr-item">
+                <small>Sholat Berikutnya</small>
+                <strong id="frNextPrayer">Memuat...</strong>
+            </div>
+            <div class="fr-item">
+                <small>Tugas Terdekat</small>
+                <strong id="frNearestTask">Belum ada tugas aktif</strong>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MODAL TAMBAH / EDIT TUGAS -->
+    <div id="taskModalOverlay" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="taskModalHeading">
+        <div class="glass-panel modal-dialog">
+            <div class="modal-top">
+                <h3 id="taskModalHeading">Tambah Tugas Sekolah</h3>
+                <button id="closeTaskModalBtn" class="icon-close-btn"><i class="ri-close-line"></i></button>
+            </div>
+
+            <form id="taskFormElement" class="modal-form">
+                <input type="hidden" id="taskEditId">
+
+                <div class="field-group">
+                    <label for="taskNameField">Nama Tugas *</label>
+                    <input type="text" id="taskNameField" class="input-desktop" placeholder="Contoh: Rangkuman Bab Ekosistem & Rantai Makanan" required>
+                </div>
+
+                <div class="two-col-form">
+                    <div class="field-group">
+                        <label for="taskSubjectField">Mata Pelajaran *</label>
+                        <input type="text" id="taskSubjectField" class="input-desktop" list="mapelList" placeholder="Contoh: Biologi" required>
+                        <datalist id="mapelList">
+                            <option value="Matematika">
+                            <option value="Biologi">
+                            <option value="Fisika">
+                            <option value="Kimia">
+                            <option value="Bahasa Indonesia">
+                            <option value="Bahasa Inggris">
+                            <option value="Sejarah">
+                            <option value="Geografi">
+                            <option value="Ekonomi">
+                            <option value="Sosiologi">
+                            <option value="Informatika">
+                        </datalist>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="taskPriorityField">Tingkat Prioritas</label>
+                        <select id="taskPriorityField" class="select-desktop">
+                            <option value="Rendah">Rendah</option>
+                            <option value="Sedang" selected>Sedang</option>
+                            <option value="Tinggi">Tinggi</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label for="taskDeadlineField">Deadline (Tanggal & Jam) *</label>
+                    <input type="datetime-local" id="taskDeadlineField" class="input-desktop" required>
+                </div>
+
+                <div class="field-group">
+                    <label for="taskNotesField">Catatan Tambahan</label>
+                    <textarea id="taskNotesField" class="input-desktop" rows="2" placeholder="Catatan pengerjaan, halaman soal, atau link materi..."></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" id="cancelTaskModalBtn" class="btn-outline">Batal</button>
+                    <button type="submit" class="btn-aqua"><i class="ri-check-line"></i> Simpan Tugas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- IN-APP TOAST STACK -->
+    <div id="toastStack" class="toast-stack"></div>
+
+    <!-- Desktop Application Script -->
+    <script src="script.js"></script>
+</body>
+</html>
